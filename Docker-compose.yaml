@@ -1,0 +1,21 @@
+version: '3.7'
+services:
+  app:
+    container_name: go_app
+    image: "<your_image>"
+    environment:
+      - name=value
+    ports:
+      - published: 9090
+        target: 9090
+    depends_on:
+      - mysql
+
+  mysql:
+    container_name: database
+    image: mysql:latest
+    ports:
+      - published: 3306
+        target: 3306
+
+  
