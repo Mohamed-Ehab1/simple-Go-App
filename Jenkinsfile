@@ -1,42 +1,31 @@
 pipeline {
-    agent any
-    
-    environment {
-        DOCKER_HUB_CREDENTIALS = credentials('dockercredentials')
-        IMAGE_NAME = 'me2o01/goapp'
-        IMAGE_TAG = 'v1'
-        DOCKER_REGISTRY_URL = 'https://hub.docker.com/repository/docker/me2o01/goapp/'
-        DOCKERFILE_PATH = 'project'
+  agent any
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '5'))
+  }
+  environment {
+    DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+  }
+  stages {
+    stage('Build') {
+      steps {
+        sh 'docker build -t lloydmatereke/jenkins-docker-hub .'
+      }
     }
-    
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-        
-        stage('Build and Push Docker Image') {
-            steps {
-                script {
-                    withDockerRegistry([credentialsId: 'dockercredentials']) {
-                        docker.build("${IMAGE_NAME}:${IMAGE_TAG}", "-f ${DOCKERFILE_PATH} .")
-                        docker.withRegistry("${DOCKER_REGISTRY_URL}") {
-                            docker.image("${IMAGE_NAME}:${IMAGE_TAG}").push()
-                        }
-                    }
-                }
-            }
-        }
+    stage('Login') {
+      steps {
+        sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+      }
     }
-
-    post {
-        success {
-            echo 'Pipeline completed successfully'
-        }
-        
-        failure {
-            echo 'Pipeline failed'
-        }
+    stage('Push') {
+      steps {
+        sh 'docker push lloydmatereke/jenkins-docker-hub'
+      }
     }
+  }
+  post {
+    always {
+      sh 'docker logout'
+    }
+  }
 }
