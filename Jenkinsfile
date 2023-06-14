@@ -1,5 +1,5 @@
 pipeline {
-    agent none
+    agent any
     
     environment {
         DOCKER_HUB_CREDENTIALS = credentials('dockercredentials')
@@ -11,22 +11,18 @@ pipeline {
     
     stages {
         stage('Checkout') {
-            agent any
             steps {
                 checkout scm
             }
         }
         
         stage('Build and Push Docker Image') {
-            agent any
             steps {
-                script {
-                    sh 'curl -fsSL https://get.docker.com -o get-docker.sh'
-                    sh 'sh get-docker.sh'
-                    sh 'usermod -aG docker jenkins'
-                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -f ${DOCKERFILE_PATH} ."
-                    sh "docker login -u your-docker-username -p ${DOCKER_HUB_CREDENTIALS}"
-                    sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
+                withDockerRegistry([credentialsId: DOCKER_HUB_CREDENTIALS]) {
+                    docker.build("${IMAGE_NAME}:${IMAGE_TAG}", "-f ${DOCKERFILE_PATH} .")
+                    docker.withRegistry("${DOCKER_REGISTRY_URL}") {
+                        docker.image("${IMAGE_NAME}:${IMAGE_TAG}").push()
+                    }
                 }
             }
         }
@@ -42,4 +38,3 @@ pipeline {
         }
     }
 }
- 
