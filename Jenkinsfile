@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'docker:20.10.9'
-            reuseNode true
-        }
-    }
+    agent any
     
     environment {
         DOCKER_HUB_CREDENTIALS = credentials('dockercredentials')
@@ -21,7 +16,22 @@ pipeline {
             }
         }
         
+        stage('Install Docker') {
+            steps {
+                sh 'curl -fsSL https://get.docker.com -o get-docker.sh'
+                sh 'sh get-docker.sh'
+                sh 'usermod -aG docker jenkins'
+            }
+        }
+        
         stage('Build and Push Docker Image') {
+            agent {
+                docker {
+                    image 'docker:20.10.9'
+                    reuseNode true
+                }
+            }
+            
             steps {
                 script {
                     sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -f ${DOCKERFILE_PATH} ."
