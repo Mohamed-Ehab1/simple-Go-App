@@ -19,7 +19,7 @@ pipeline {
         stage('Build and Push Docker Image') {
             steps {
                 script {
-                    withDockerRegistry([credentialsId: DOCKER_HUB_CREDENTIALS]) {
+                    withDockerRegistry([credentialsId: 'dockercredentials']) {
                         docker.build("${IMAGE_NAME}:${IMAGE_TAG}", "-f ${DOCKERFILE_PATH} .")
                         docker.withRegistry("${DOCKER_REGISTRY_URL}") {
                             docker.image("${IMAGE_NAME}:${IMAGE_TAG}").push()
