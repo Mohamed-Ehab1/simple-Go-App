@@ -15,7 +15,7 @@ pipeline {
                     def imageTag = "v1"
                     def dockerFilePath = "./project"
                     def dockerRegistryUrl = "https://hub.docker.com/repository/docker/me2o01/goapp/"
-                    def dockerCredentialsId = "<docker_credentials_id>"
+                    def dockerCredentialsId = "dokercredentials"
                     // Build the Docker image
                     def dockerBuild = docker.build("${dockerRegistryUrl}/${imageName}:${imageTag}", "-f ${dockerFilePath} .")
                     
@@ -34,15 +34,4 @@ pipeline {
         }
     }
 
-    post {
-       
-       success {
-           echo 'Pipeline completed successfully'
-       }
-       
-       failure {
-           echo 'Pipeline failed'
-       }
-    
-    }
 }
