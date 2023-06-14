@@ -9,7 +9,7 @@ pipeline {
   stages {
     stage('Build') {
       steps {
-        sh 'docker build -t lloydmatereke/jenkins-docker-hub ./project/'
+        sh 'docker build -t me2o01/goapp ./project/'
       }
     }
     stage('Login') {
