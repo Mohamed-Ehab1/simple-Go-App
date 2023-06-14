@@ -1,5 +1,18 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'docker:20.10.9'
+            reuseNode true
+        }
+    }
+    
+    environment {
+        DOCKER_HUB_CREDENTIALS = credentials('dockercredentials')
+        IMAGE_NAME = 'me2o01/goapp'
+        IMAGE_TAG = 'v1'
+        DOCKER_REGISTRY_URL = 'https://hub.docker.com/repository/docker/me2o01/goapp/'
+        DOCKERFILE_PATH = 'project'
+    }
     
     stages {
         stage('Checkout') {
@@ -10,37 +23,10 @@ pipeline {
         
         stage('Build and Push Docker Image') {
             steps {
-                withCredentials([string(credentialsId: 'dockercredentials', variable: 'DOCKER_HUB_CREDENTIALS')]) {
-                    script {
-                        def imageName = "me2o01/goapp"
-                        def imageTag = "v1"
-                        def dockerFilePath = "project"
-                        def dockerRegistryUrl = "https://hub.docker.com/repository/docker/me2o01/goapp/"
-                        
-                        // Run the Docker container with DIND
-                        sh 'docker run --rm --privileged --name dind -d docker:dind'
-                        
-                        // Build the Docker image inside the DIND container
-                        sh "docker exec dind docker build -t ${imageName}:${imageTag} -f ${dockerFilePath} ."
-                        
-                        // Check if the Docker image build was successful
-                        if (env.BUILD_STATUS == "SUCCESS") {
-                            echo "Docker image build successful: ${imageName}:${imageTag}"
-                            
-                            // Log in to the Docker registry
-                            sh "docker exec dind docker login -u me2o01 -p ${DOCKER_HUB_CREDENTIALS}"
-                            
-                            // Push the Docker image to the registry
-                            sh "docker exec dind docker push ${imageName}:${imageTag}"
-                            
-                            echo "Docker image pushed to ${dockerRegistryUrl}/${imageName}:${imageTag}"
-                        } else {
-                            error "Docker image build failed"
-                        }
-                        
-                        // Stop and remove the DIND container
-                        sh 'docker stop dind'
-                    }
+                script {
+                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -f ${DOCKERFILE_PATH} ."
+                    sh "docker login -u me2o01 -p ${DOCKER_HUB_CREDENTIALS}"
+                    sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
                 }
             }
         }
