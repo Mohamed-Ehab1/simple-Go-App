@@ -8,30 +8,45 @@ pipeline {
             }
         }
         
-        stage('Build Docker Image') {
+        stage('Build and Push Docker Image') {
             steps {
-                script {
-                    def imageName = "me2o01/goapp"
-                    def imageTag = "v1"
-                    def dockerFilePath = "./project"
-                    def dockerRegistryUrl = "https://hub.docker.com/repository/docker/me2o01/goapp/"
-                    def dockerCredentialsId = "dokercredentials"
-                    // Build the Docker image
-                    def dockerBuild = docker.build("${dockerRegistryUrl}/${imageName}:${imageTag}", "-f ${dockerFilePath} .")
-                    
-                    // Check if the Docker image build was successful
-                    if (dockerBuild) {
-                        echo "Docker image build successful: ${imageName}:${imageTag}"
-                        docker.withRegistry(dockerRegistryUrl, dockerCredentialsId) {
-                            dockerBuild.push()
+                withCredentials([string(credentialsId: 'dockercredentials', variable: 'DOCKER_HUB_CREDENTIALS')]) {
+                    script {
+                        def imageName = "me2o01/goapp"
+                        def imageTag = "v1"
+                        def dockerFilePath = "/project"
+                        def dockerRegistryUrl = "https://hub.docker.com/repository/docker/me2o01/goapp/"
+                        
+                        // Build the Docker image
+                        sh "docker build -t ${imageName}:${imageTag} -f ${dockerFilePath} ."
+                        
+                        // Check if the Docker image build was successful
+                        if (env.BUILD_STATUS == "SUCCESS") {
+                            echo "Docker image build successful: ${imageName}:${imageTag}"
+                            
+                            // Log in to the Docker registry
+                            sh "docker login -u <your-docker-username> -p ${DOCKER_HUB_CREDENTIALS}"
+                            
+                            // Push the Docker image to the registry
+                            sh "docker push ${imageName}:${imageTag}"
+                            
                             echo "Docker image pushed to ${dockerRegistryUrl}/${imageName}:${imageTag}"
+                        } else {
+                            error "Docker image build failed"
                         }
-                    } else {
-                        error "Docker image build failed"
                     }
                 }
             }
         }
     }
 
+    post {
+        success {
+            echo 'Pipeline completed successfully'
+        }
+        
+        failure {
+            echo 'Pipeline failed'
+        }
+    }
 }
