@@ -25,7 +25,7 @@ pipeline {
                             echo "Docker image build successful: ${imageName}:${imageTag}"
                             
                             // Log in to the Docker registry
-                            sh "docker login -u <your-docker-username> -p ${DOCKER_HUB_CREDENTIALS}"
+                            sh "docker login -u me2o01 -p ${DOCKER_HUB_CREDENTIALS}"
                             
                             // Push the Docker image to the registry
                             sh "docker push ${imageName}:${imageTag}"
